@@ -2,7 +2,6 @@ from flask import Flask, render_template, request, jsonify, send_file
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
-import pandas as pd
 import os
 from dotenv import load_dotenv
 
@@ -12,6 +11,8 @@ load_dotenv()
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'default-secret-key')
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///instituto.db')
+if app.config['SQLALCHEMY_DATABASE_URI'].startswith("postgres://"):
+    app.config['SQLALCHEMY_DATABASE_URI'] = app.config['SQLALCHEMY_DATABASE_URI'].replace("postgres://", "postgresql://", 1)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['LOGO_FOLDER'] = os.path.join('static', 'img')
@@ -21,6 +22,15 @@ app.config['LOGO_NAME'] = 'logo.svg'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 db = SQLAlchemy(app)
+
+# Ruta de prueba para verificar la conexión a la base de datos
+@app.route('/db-test')
+def db_test():
+    try:
+        db.session.execute('SELECT 1')
+        return jsonify({'status': 'success', 'message': 'Conexión a la base de datos exitosa'})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)})
 
 # Modelos
 class Usuario(db.Model):
@@ -73,49 +83,6 @@ def login():
             }
         })
     return jsonify({'success': False, 'message': 'Usuario o contraseña incorrectos'})
-
-@app.route('/api/upload-alumnos', methods=['POST'])
-def upload_alumnos():
-    if 'file' not in request.files:
-        return jsonify({'success': False, 'message': 'No se envió ningún archivo'})
-    
-    file = request.files['file']
-    if file.filename == '':
-        return jsonify({'success': False, 'message': 'No se seleccionó ningún archivo'})
-    
-    if not file.filename.endswith('.xlsx'):
-        return jsonify({'success': False, 'message': 'El archivo debe ser un Excel (.xlsx)'})
-    
-    try:
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
-        file.save(filepath)
-        
-        df = pd.read_excel(filepath)
-        
-        for _, row in df.iterrows():
-            alumno = Alumno(
-                nombre=row['nombre'],
-                dni=row['dni'],
-                fecha_nacimiento=datetime.strptime(str(row['fecha_nacimiento']), '%Y-%m-%d').date(),
-                curso=row['curso'],
-                fecha_inscripcion=datetime.now().date(),
-                responsable=row['responsable'],
-                telefono=row['telefono'],
-                direccion=row['direccion'],
-                tipo_promocion=row.get('tipo_promocion', None),
-                descuento=row.get('descuento', 0)
-            )
-            db.session.add(alumno)
-        
-        db.session.commit()
-        os.remove(filepath)
-        
-        return jsonify({'success': True, 'message': 'Alumnos importados correctamente'})
-    
-    except Exception as e:
-        if os.path.exists(filepath):
-            os.remove(filepath)
-        return jsonify({'success': False, 'message': f'Error al procesar el archivo: {str(e)}'})
 
 @app.route('/static/img/<path:filename>')
 def serve_logo(filename):

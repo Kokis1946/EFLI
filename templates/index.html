@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English For Life - Sistema de Gestión</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div id="app">
+        <div id="loginScreen" class="container">
+            <div class="login-container">
+                <div class="card login-card">
+                    <div class="card-header text-center">
+                        <div class="d-flex flex-column align-items-center">
+                            <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="English For Life" class="instituto-logo mb-3" style="max-width: 250px; height: auto; display: block; margin: 0 auto; object-fit: contain;">
+                            <h4>English For Life</h4>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <form id="loginForm">
+                            <div class="mb-3">
+                                <label for="username" class="form-label">Usuario</label>
+                                <input type="text" class="form-control" id="username" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="password" class="form-label">Contraseña</label>
+                                <input type="password" class="form-control" id="password" required>
+                            </div>
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary">Iniciar Sesión</button>
+                            </div>
+                            <div class="text-center mt-3">
+                                <a href="#" id="forgotPassword">¿Olvidó su contraseña?</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="mainApp" class="d-none">
+            <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+                <div class="container-fluid">
+                    <a class="navbar-brand d-flex align-items-center" href="#">
+                        <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="English For Life" class="d-inline-block align-text-top me-2" style="max-width: 50px; height: auto;">
+                        English For Life
+                    </a>
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                    <div class="collapse navbar-collapse" id="navbarNav">
+                        <ul class="navbar-nav">
+                            <li class="nav-item">
+                                <a class="nav-link active" href="#" data-page="dashboard">Dashboard</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-page="students">Alumnos</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-page="teachers">Docentes</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-page="payments">Pagos</a>
+                            </li>
+                            <li class="nav-item admin-only d-none">
+                                <a class="nav-link" href="#" data-page="users">Usuarios</a>
+                            </li>
+                        </ul>
+                        <ul class="navbar-nav ms-auto">
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-user-circle"></i> <span id="currentUser">Usuario</span>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><a class="dropdown-item" href="#" id="profileLink">Perfil</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="#" id="logoutBtn">Cerrar Sesión</a></li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+
+            <div class="container-fluid mt-4">
+                <!-- Dashboard -->
+                <div id="dashboard" class="content-page">
+                    <h2>Dashboard</h2>
+                    <div class="row mt-4">
+                        <div class="col-md-3">
+                            <div class="card text-white bg-primary mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title">Total Alumnos</h5>
+                                    <p class="card-text display-4" id="totalStudents">0</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card text-white bg-success mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title">Total Docentes</h5>
+                                    <p class="card-text display-4" id="totalTeachers">0</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card text-white bg-info mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title">Pagos del Mes</h5>
+                                    <p class="card-text display-4" id="monthlyPayments">$0</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card text-white bg-warning mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title">Pendientes de Pago</h5>
+                                    <p class="card-text display-4" id="pendingPayments">0</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Alumnos -->
+                <div id="students" class="content-page d-none">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h2>Gestión de Alumnos</h2>
+                        <div>
+                            <button class="btn btn-success me-2" id="uploadExcelBtn">
+                                <i class="fas fa-file-excel"></i> Importar Excel
+                            </button>
+                            <button class="btn btn-primary" id="addStudentBtn">
+                                <i class="fas fa-plus"></i> Nuevo Alumno
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="studentSearch" placeholder="Buscar por nombre, DNI o curso...">
+                                        <button class="btn btn-primary" type="button" id="searchStudentBtn">
+                                            <i class="fas fa-search"></i> Buscar
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <select class="form-select" id="studentCourseFilter">
+                                        <option value="">Todos los cursos</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <select class="form-select" id="studentStatusFilter">
+                                        <option value="">Todos los estados</option>
+                                        <option value="active">Activos</option>
+                                        <option value="inactive">Inactivos</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Nombre y Apellido</th>
+                                            <th>DNI</th>
+                                            <th>Curso</th>
+                                            <th>Responsable</th>
+                                            <th>Teléfono</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="studentsTable">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Resto de las secciones -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para subir Excel -->
+    <div class="modal fade" id="uploadExcelModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Importar Alumnos desde Excel</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="uploadForm">
+                        <div class="mb-3">
+                            <label for="excelFile" class="form-label">Seleccionar archivo Excel</label>
+                            <input type="file" class="form-control" id="excelFile" accept=".xlsx" required>
+                        </div>
+                        <div class="alert alert-info">
+                            <h6>El archivo Excel debe contener las siguientes columnas:</h6>
+                            <ul class="mb-0">
+                                <li>nombre</li>
+                                <li>dni</li>
+                                <li>fecha_nacimiento (YYYY-MM-DD)</li>
+                                <li>curso</li>
+                                <li>responsable</li>
+                                <li>telefono</li>
+                                <li>direccion</li>
+                                <li>tipo_promocion (opcional)</li>
+                                <li>descuento (opcional)</li>
+                            </ul>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="submitExcelBtn">Importar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para recibo de pago -->
+    <div class="modal fade" id="receiptModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Recibo de Pago</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="receiptContent">
+                    <div class="text-center mb-4">
+                        <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="English For Life" class="receipt-logo" style="max-width: 200px; height: auto; margin-bottom: 15px;">
+                        <h4>English For Life</h4>
+                    </div>
+                    <form id="receiptForm">
+                        <div class="mb-3">
+                            <label for="receiptAmount" class="form-label">Monto del Pago</label>
+                            <input type="text" class="form-control" id="receiptAmount" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="receiptDate" class="form-label">Fecha del Pago</label>
+                            <input type="date" class="form-control" id="receiptDate" required>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">Guardar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para nuevo alumno -->
+    <div class="modal fade" id="studentModal" tabindex="-1" aria-labelledby="studentModalTitle" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="studentModalTitle">Nuevo Alumno</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="studentForm">
+                        <input type="hidden" id="studentId">
+                        <div class="mb-3">
+                            <label for="studentName" class="form-label">Nombre y Apellido</label>
+                            <input type="text" class="form-control" id="studentName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="studentDni" class="form-label">DNI</label>
+                            <input type="text" class="form-control" id="studentDni" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="studentCourse" class="form-label">Curso</label>
+                            <select class="form-select" id="studentCourse" required>
+                                <option value="">Seleccionar curso...</option>
+                                <option value="1° A">1° A</option>
+                                <option value="1° B">1° B</option>
+                                <option value="2° A">2° A</option>
+                                <option value="2° B">2° B</option>
+                                <option value="3° A">3° A</option>
+                                <option value="3° B">3° B</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="studentResponsible" class="form-label">Responsable</label>
+                            <input type="text" class="form-control" id="studentResponsible" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="studentPhone" class="form-label">Teléfono</label>
+                            <input type="tel" class="form-control" id="studentPhone" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="saveStudentBtn">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html> 

@@ -2,7 +2,11 @@ services:
   - type: web
     name: instituto-app
     env: python
-    buildCommand: pip install -r requirements.txt
+    buildCommand: |
+      python -m venv venv
+      . venv/bin/activate
+      pip install --upgrade pip
+      pip install -r requirements.txt
     startCommand: gunicorn app:app
     envVars:
       - key: PYTHON_VERSION
@@ -15,11 +19,6 @@ services:
         fromDatabase:
           name: instituto-db
           property: connectionString
-    buildCommand: |
-      python -m venv venv
-      . venv/bin/activate
-      pip install --upgrade pip
-      pip install -r requirements.txt
 
 databases:
   - name: instituto-db

@@ -15,6 +15,11 @@ services:
         fromDatabase:
           name: instituto-db
           property: connectionString
+    buildCommand: |
+      python -m venv venv
+      . venv/bin/activate
+      pip install --upgrade pip
+      pip install -r requirements.txt
 
 databases:
   - name: instituto-db
